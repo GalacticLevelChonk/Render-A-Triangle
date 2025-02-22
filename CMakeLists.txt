@@ -75,9 +75,10 @@ endif()
 
 
 #-----------------------------------------Shader compilation-----------------------------------------#
-    set(GLOB SHADER_SOURCES "${CMAKE_SOURCE_DIR}/shaders/*.vert" "${CMAKE_SOURCE_DIR}/shaders/*.frag")
+file(GLOB SHADER_SOURCES "${CMAKE_SOURCE_DIR}/shaders/*.vert" "${CMAKE_SOURCE_DIR}/shaders/*.frag")
 
-    set(SHADER_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/bin/shaders")
+set(SHADER_OUTPUT_DIR "${CMAKE_BINARY_DIR}/shaders")
+    file(MAKE_DIRECTORY ${SHADER_OUTPUT_DIR})
 
     set(SPIRV_SHADERS "")
 
@@ -88,13 +89,13 @@ endif()
         set(SHADER_OUTPUT "${SHADER_OUTPUT_DIR}/${SHADER_NAME}_${SHADER_EXT_NO_DOT}.spv")
 
         add_custom_command(
-            OUTPUT ${SHADER_OUTPUT_DIR}
+            OUTPUT ${SHADER_OUTPUT}
             COMMAND ${GLSLANG_VALIDATOR} -V ${SHADER_FILE} -o ${SHADER_OUTPUT}
             DEPENDS ${SHADER_FILE}
             VERBATIM
         )
 
-        list(APPEND SPIRV_SHADERS ${SHADER_OUPUT_DIR})
+        list(APPEND SPIRV_SHADERS ${SHADER_OUTPUT})
     endforeach()
 
     add_custom_target(
@@ -109,6 +110,7 @@ endif()
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${SHADER_OUTPUT_DIR} ${RUNTIME_SHADER_DIR}
     )
 
+add_dependencies(Render-A-Triangle Shaders)
 
 #-----------------------------------------Include directories and libraries-----------------------------------------#
 target_include_directories(Render-A-Triangle PRIVATE
