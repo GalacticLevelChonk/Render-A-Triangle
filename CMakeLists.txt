@@ -9,39 +9,54 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
 #-----------------------------------------Find GLFW and Vulkan-----------------------------------------#
-if (DEFINED VULKAN_SDK_PATH)
-  set(Vulkan_INCLUDE_DIRS "${VULKAN_SDK_PATH}/Include") # 1.1 Make sure this include path is correct
-  set(Vulkan_LIBRARIES "${VULKAN_SDK_PATH}/Lib") # 1.2 Make sure lib path is correct
+if(DEFINED VULKAN_SDK_PATH)
+  set(Vulkan_INCLUDE_DIRS "${VULKAN_SDK_PATH}/Include")
+  set(Vulkan_LIBRARIES "${VULKAN_SDK_PATH}/Lib")
   set(Vulkan_FOUND "True")
-else()
-  find_package(Vulkan REQUIRED) # throws error if could not find Vulkan
+
+  else()
+  find_package(Vulkan REQUIRED)
   message(STATUS "Found Vulkan: $ENV{VULKAN_SDK}")
-endif()
-if (NOT Vulkan_FOUND)
+
+  endif()
+
+if(NOT Vulkan_FOUND)
 	message(FATAL_ERROR "Could not find Vulkan library!")
 else()
 	message(STATUS "Using vulkan lib at: ${Vulkan_LIBRARIES}")
 endif()
 
-if (DEFINED GLFW_PATH)
+
+
+
+
+if(DEFINED GLFW_PATH)
   message(STATUS "Using GLFW path specified in .env")
   set(GLFW_INCLUDE_DIRS "${GLFW_PATH}/include")
+  
   if (MSVC)
-    set(GLFW_LIB "${GLFW_PATH}/lib-vc2019") # 2.1 Update lib-vc2019 to use same version as your visual studio
-  elseif (CMAKE_GENERATOR STREQUAL "MinGW Makefiles")
+    set(GLFW_LIB "${GLFW_PATH}/lib-vc2019")
+  
+    elseif (CMAKE_GENERATOR STREQUAL "MinGW Makefiles")
     message(STATUS "USING MINGW")
-    set(GLFW_LIB "${GLFW_PATH}/lib-mingw-w64") # 2.1 make sure matches glfw mingw subdirectory
-  endif()
+    set(GLFW_LIB "${GLFW_PATH}/lib-mingw-w64")
+  
+    endif()
+
 else()
   find_package(glfw3 3.3 REQUIRED)
   set(GLFW_LIB glfw)
   message(STATUS "Found GLFW")
-endif()
+
+  endif()
+
 if (NOT GLFW_LIB)
 	message(FATAL_ERROR "Could not find glfw library!")
 else()
 	message(STATUS "Using glfw lib at: ${GLFW_LIB}")
 endif()
+
+find_package(glm REQUIRED)
 
 #-----------------------------------------Set source files-----------------------------------------#
 file(GLOB SOURCES "${CMAKE_SOURCE_DIR}/src/*.cpp" "${CMAKE_SOURCE_DIR}/src/*.mm")
@@ -109,6 +124,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     message(STATUS "MoltenVK found at: ${MOLTENVK_LIBRARY}")
 
     target_link_libraries(Render-A-Triangle PRIVATE
+        glm::glm
         ${MOLTENVK_LIBRARY}
         glfw
         ${QUARTZCORE_LIBRARY}
