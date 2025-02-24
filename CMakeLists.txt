@@ -5,17 +5,17 @@ project(Render-A-Triangle)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
 #-----------------------------------------Find GLFW and Vulkan-----------------------------------------#
 if(DEFINED VULKAN_SDK_PATH)
   set(Vulkan_INCLUDE_DIRS "${VULKAN_SDK_PATH}/Include")
-  set(Vulkan_LIBRARIES "${VULKAN_SDK_PATH}/Lib")
+  set(Vulkan_LIBRARIES "${VULKAN_SDK_PATH}/lib")
   set(Vulkan_FOUND "True")
 
   else()
   find_package(Vulkan REQUIRED)
+  set(Vulkan_PATH "$ENV{VULKAN_SDK}")
   message(STATUS "Found Vulkan: $ENV{VULKAN_SDK}")
 
   endif()
@@ -31,30 +31,32 @@ endif()
 
 
 if(DEFINED GLFW_PATH)
-  message(STATUS "Using GLFW path specified in .env")
+  message(STATUS "Using GLFW path specified in .env: ${GLFW_PATH}")
   set(GLFW_INCLUDE_DIRS "${GLFW_PATH}/include")
   
   if (MSVC)
     set(GLFW_LIB "${GLFW_PATH}/lib-vc2019")
   
-    elseif (CMAKE_GENERATOR STREQUAL "MinGW Makefiles")
+  elseif (CMAKE_GENERATOR STREQUAL "MinGW Makefiles")
     message(STATUS "USING MINGW")
     set(GLFW_LIB "${GLFW_PATH}/lib-mingw-w64")
-  
-    endif()
+  endif()
 
 else()
   find_package(glfw3 3.3 REQUIRED)
-  set(GLFW_LIB glfw)
+
+  set(GLFW_FOUND "True")
+  message(STATUS "GLFW library path: ${GLFW_LIB_PATH}")
+
   message(STATUS "Found GLFW")
-
-  endif()
-
-if (NOT GLFW_LIB)
-	message(FATAL_ERROR "Could not find glfw library!")
-else()
-	message(STATUS "Using glfw lib at: ${GLFW_LIB}")
 endif()
+
+if (NOT GLFW_FOUND)
+  message(FATAL_ERROR "Could not find glfw library!")
+else()
+  message(STATUS "Using glfw lib: ${GLFW_LIB}")
+endif()
+
 
 find_package(glm REQUIRED)
 
@@ -80,7 +82,7 @@ file(GLOB SHADER_SOURCES "${CMAKE_SOURCE_DIR}/shaders/*.vert" "${CMAKE_SOURCE_DI
 set(SHADER_OUTPUT_DIR "${CMAKE_BINARY_DIR}/shaders")
     file(MAKE_DIRECTORY ${SHADER_OUTPUT_DIR})
 
-    set(SPIRV_SHADERS "")
+    set(SPIRV_SHADErs "")
 
     foreach(SHADER_FILE ${SHADER_SOURCES})
         get_filename_component(SHADER_NAME ${SHADER_FILE} NAME_WE)
@@ -95,12 +97,12 @@ set(SHADER_OUTPUT_DIR "${CMAKE_BINARY_DIR}/shaders")
             VERBATIM
         )
 
-        list(APPEND SPIRV_SHADERS ${SHADER_OUTPUT})
+        list(APPEND SPIRV_SHADErs ${SHADER_OUTPUT})
     endforeach()
 
     add_custom_target(
         Shaders ALL
-        DEPENDS ${SPIRV_SHADERS}
+        DEPENDS ${SPIRV_SHADErs}
     )
 
     set(RUNTIME_SHADER_DIR "${CMAKE_SOURCE_DIR}/bin/shaders")
@@ -119,26 +121,25 @@ target_include_directories(Render-A-Triangle PRIVATE
     ${GLFW_INCLUDE_DIRS}
 )
 
+message(STATUS "GLFW LIB PATH: ${GLFW_LIB_PATH}")
+target_link_libraries(Render-A-Triangle PRIVATE
+    glfw
+    glm::glm
+    ${Vulkan_LIBRARIES}
+)
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    find_library(QUARTZCORE_LIBRARY QuartzCore)
-    
-    find_library(MOLTENVK_LIBRARY MoltenVK HINTS "${VULKAN_SDK_PATH}/lib")
-    message(STATUS "MoltenVK found at: ${MOLTENVK_LIBRARY}")
 
-    target_link_libraries(Render-A-Triangle PRIVATE
-        glm::glm
-        ${MOLTENVK_LIBRARY}
-        glfw
-        ${QUARTZCORE_LIBRARY}
-        "-framework CoreFoundation"
-        "-framework CoreGraphics"
-        "-framework IOKit"
-        "-framework IOSurface"
-        "-framework QuartzCore"
-        "-framework Metal"
-        "-framework MetalKit"
-        "-framework Foundation"
-        "-framework AppKit"
-    )
+target_link_libraries(Render-A-Triangle PRIVATE
+    "${Vulkan_PATH}/lib/libMoltenVK.dylib"
+    "-framework QuartzCore"
+    "-framework CoreFoundation"
+    "-framework CoreGraphics"
+    "-framework IOKit"
+    "-framework IOSurface"
+    "-framework Metal"
+    "-framework MetalKit"
+    "-framework Foundation"
+    "-framework AppKit"
+)
 endif()
-
